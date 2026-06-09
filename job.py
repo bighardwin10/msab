@@ -65,6 +65,8 @@ finally:
     # 5. 关闭连接
     ssh.close()
 
+print(os.listdir)
+
 dest_file = f"{folder_name}-backup-{date.today().strftime('%Y%m%d')}"
 shutil.make_archive(dest_file,"zip",folder_name)
 logging.info("压缩完成！")
