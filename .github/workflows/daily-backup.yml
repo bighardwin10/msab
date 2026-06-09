@@ -35,7 +35,7 @@ jobs:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           SFTP_HOST: ${{ secrets.SFTP_HOST }}
-          SFTP_PORT: ${{ secrets.SFTP_PORT }}
+          SFTP_PORT: ${{ secrets.SFTP_PORT || 22 }}
           SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
           SFTP_PASSWD: ${{ secrets.SFTP_PASSWD }}
           SAVE_FOLDER_NAME: ${{ secrets.SAVE_FOLDER_NAME }}
