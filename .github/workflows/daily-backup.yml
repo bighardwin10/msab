@@ -1,0 +1,60 @@
+name: Daily Backup
+
+on:
+  schedule:
+    # UTC+8 22:00 对应 UTC 14:00
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Sync dependencies
+        run: uv sync
+
+      - name: Back up
+        env:
+          TENANT_ID: ${{ secrets.TENANT_ID }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          SFTP_HOST: ${{ secrets.SFTP_HOST }}
+          SFTP_PORT: ${{ secrets.SFTP_PORT }}
+          SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
+          SFTP_PASSWD: ${{ secrets.SFTP_PASSWD }}
+          SAVE_FOLDER_NAME: ${{ secrets.SAVE_FOLDER_NAME }}
+        run: uv run python job.py
+
+      - name: Commit and push all .zip files
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+
+          find . -name "*.zip" -type f -exec git add {} \;
+
+          if git diff --cached --quiet; then
+            echo "No new zip files to commit."
+          else
+            git commit -m "Add generated zip files from scheduled job"
+            git pull origin master --rebase || echo "Pull failed, continue pushing"
+            git push origin master
+          fi
